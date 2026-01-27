@@ -40,11 +40,11 @@ The agent's system prompt is dynamically generated based on its configuration, a
 
 Built-in templates provide starting configurations for common roles:
 
-| Template | Purpose | Temperature |
-|----------|---------|-------------|
-| **Planner** | Strategic planning and task decomposition | 0.7 (more creative) |
-| **Coder** | Code generation and implementation | 0.2 (more precise) |
-| **Reviewer** | Code review and quality assurance | 0.3 (balanced) |
+| Template | Purpose | 
+|----------|---------|
+| **Planner** | Strategic planning and task decomposition 
+| **Coder** | Code generation and implementation 
+| **Reviewer** | Code review and quality assurance 
 
 ### The Agent Loop
 

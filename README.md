@@ -102,6 +102,9 @@ Adding a new tool type requires only implementing the `ToolPlugin` interface and
 ```bash
 cd frontend
 
+# Install deps
+npm install
+
 # Run tests
 npm run test           # Unit tests (Vitest)
 npm run test:watch     # Watch mode

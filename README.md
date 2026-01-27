@@ -100,6 +100,7 @@ Adding a new tool type requires only implementing the `ToolPlugin` interface and
 ## Development
 
 ```bash
+git clone https://github.com/im-knots/ainulindale.git
 cd frontend
 
 # Install deps

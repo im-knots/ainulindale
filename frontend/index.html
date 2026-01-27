@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ainulindale</title>
+    <!-- Tailwind CSS is now imported in main.tsx via App.tsx -->
+    <style>
+      /* Inline splash screen styles for instant display */
+      #splash-screen {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #0a0a0f;
+        z-index: 9999;
+      }
+      #splash-screen .spinner {
+        position: relative;
+        width: 192px;
+        height: 192px;
+      }
+      #splash-screen .spinner-ring {
+        position: absolute;
+        inset: 0;
+        animation: spin 2s linear infinite;
+      }
+      #splash-screen .logo-container {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      #splash-screen .logo {
+        width: 128px;
+        height: 128px;
+        object-fit: contain;
+      }
+      #splash-screen .text {
+        margin-top: 2rem;
+        text-align: center;
+      }
+      #splash-screen .title {
+        color: #f8fafc;
+        font-size: 1.25rem;
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+      }
+      #splash-screen .subtitle {
+        color: #94a3b8;
+        font-size: 0.875rem;
+      }
+      #splash-screen .dots {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: 1rem;
+        gap: 0.25rem;
+      }
+      #splash-screen .dot {
+        width: 0.5rem;
+        height: 0.5rem;
+        background-color: #6366f1;
+        border-radius: 9999px;
+        animation: pulse 1.5s ease-in-out infinite;
+      }
+      #splash-screen .dot:nth-child(2) {
+        animation-delay: 0.15s;
+      }
+      #splash-screen .dot:nth-child(3) {
+        animation-delay: 0.3s;
+      }
+      @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+      @keyframes pulse {
+        0%, 100% { opacity: 0.3; }
+        50% { opacity: 1; }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Splash screen shown immediately while React loads -->
+    <div id="splash-screen">
+      <div style="display: flex; flex-direction: column; align-items: center;">
+        <div class="spinner">
+          <svg class="spinner-ring" viewBox="0 0 100 100">
+            <circle
+              cx="50"
+              cy="50"
+              r="45"
+              fill="none"
+              stroke="url(#gradient)"
+              stroke-width="2"
+              stroke-dasharray="70 200"
+              stroke-linecap="round"
+            />
+            <defs>
+              <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#6366f1" stop-opacity="1" />
+                <stop offset="50%" stop-color="#8b5cf6" stop-opacity="1" />
+                <stop offset="100%" stop-color="#6366f1" stop-opacity="0.3" />
+              </linearGradient>
+            </defs>
+          </svg>
+          <div class="logo-container">
+            <img src="/logos/ainulogo.png" alt="Ainulindale" class="logo" />
+          </div>
+        </div>
+        <div class="text">
+          <h2 class="title">Ainulindale</h2>
+          <p class="subtitle">AI Operations Control Center</p>
+          <div class="dots">
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+    <script>
+      // Remove splash screen once React has mounted
+      window.addEventListener('DOMContentLoaded', () => {
+        setTimeout(() => {
+          const splash = document.getElementById('splash-screen');
+          if (splash) {
+            splash.style.opacity = '0';
+            splash.style.transition = 'opacity 0.3s ease-out';
+            setTimeout(() => splash.remove(), 300);
+          }
+        }, 500); // Small delay to ensure React has rendered
+      });
+    </script>
+  </body>
+</html>
+

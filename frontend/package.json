@@ -1,0 +1,53 @@
+{
+  "name": "ainulindale-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:tauri-e2e": "cd e2e-tests && npm test",
+    "test:tauri-e2e:install": "cd e2e-tests && npm install",
+    "test:all": "npm run test && npm run test:tauri-e2e",
+    "tauri": "tauri",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.1.18",
+    "@tauri-apps/cli": "^2.9.6",
+    "@types/react": "^19.2.9",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.1.2",
+    "autoprefixer": "^10.4.23",
+    "chai": "^6.2.2",
+    "chai-http": "^5.1.2",
+    "mocha": "^11.7.5",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.18",
+    "typescript": "^5.3.3",
+    "vite": "^5.0.12",
+    "vitest": "^3.0.4"
+  },
+  "dependencies": {
+    "@ai-sdk/anthropic": "^3.0.18",
+    "@ai-sdk/cohere": "^3.0.8",
+    "@ai-sdk/google": "^3.0.10",
+    "@ai-sdk/mistral": "^3.0.9",
+    "@ai-sdk/openai": "^3.0.14",
+    "@ai-sdk/react": "^3.0.46",
+    "@ai-sdk/xai": "^3.0.29",
+    "@tauri-apps/api": "^2.9.1",
+    "@tauri-apps/plugin-dialog": "^2.6.0",
+    "@types/three": "^0.182.0",
+    "ai": "^6.0.44",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
+    "three": "^0.182.0",
+    "zod": "^4.3.5",
+    "zustand": "^5.0.10"
+  }
+}

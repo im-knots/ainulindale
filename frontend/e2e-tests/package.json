@@ -1,0 +1,19 @@
+{
+  "name": "ainulindale-e2e",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "wdio run wdio.conf.js",
+    "test:headed": "WDIO_HEADLESS=false wdio run wdio.conf.js"
+  },
+  "dependencies": {
+    "@wdio/cli": "^9.19.0"
+  },
+  "devDependencies": {
+    "@wdio/local-runner": "^9.19.0",
+    "@wdio/mocha-framework": "^9.19.0",
+    "@wdio/spec-reporter": "^9.19.0"
+  }
+}
+

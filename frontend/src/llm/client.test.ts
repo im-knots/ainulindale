@@ -86,6 +86,35 @@ describe('LLMClient', () => {
     });
   });
 
+  describe('getDefaultModelForProvider', () => {
+    it('returns correct default model for each provider', () => {
+      expect(client.getDefaultModelForProvider('openai')).toBe('gpt-4o-mini');
+      expect(client.getDefaultModelForProvider('anthropic')).toBe('claude-3-5-sonnet-20241022');
+      expect(client.getDefaultModelForProvider('deepseek')).toBe('deepseek-chat');
+      expect(client.getDefaultModelForProvider('gemini')).toBe('gemini-2.0-flash');
+      expect(client.getDefaultModelForProvider('cohere')).toBe('command-r');
+      expect(client.getDefaultModelForProvider('mistral')).toBe('mistral-small-latest');
+      expect(client.getDefaultModelForProvider('ollama')).toBe('llama3.2');
+      expect(client.getDefaultModelForProvider('grok')).toBe('grok-2');
+      expect(client.getDefaultModelForProvider('mock')).toBe('mock-model');
+    });
+
+    it('returns mock-model for unknown provider', () => {
+      expect(client.getDefaultModelForProvider('unknown' as LLMProviderType)).toBe('mock-model');
+    });
+
+    it('returns provider-appropriate model when switching providers', () => {
+      // This tests the fix for GitHub issue #1: Ollama using claude-3-5-sonnet
+      // When switching from Anthropic to Ollama, the model should change to llama3.2
+      const anthropicDefault = client.getDefaultModelForProvider('anthropic');
+      const ollamaDefault = client.getDefaultModelForProvider('ollama');
+
+      expect(anthropicDefault).toBe('claude-3-5-sonnet-20241022');
+      expect(ollamaDefault).toBe('llama3.2');
+      expect(anthropicDefault).not.toBe(ollamaDefault);
+    });
+  });
+
   describe('getModelsForProvider', () => {
     it('returns models for openai', async () => {
       const models = await client.getModelsForProvider('openai');
@@ -185,10 +214,20 @@ describe('LLMClient', () => {
     });
   });
 
-  describe('setOllamaBaseUrl', () => {
+  describe('Ollama base URL', () => {
+    it('has default localhost URL', () => {
+      expect(client.getOllamaBaseUrl()).toBe('http://localhost:11434/v1');
+    });
+
     it('can set custom Ollama URL', () => {
-      // Just verify it doesn't throw
       client.setOllamaBaseUrl('http://custom:11434/v1');
+      expect(client.getOllamaBaseUrl()).toBe('http://custom:11434/v1');
+    });
+
+    it('can set remote Ollama URL', () => {
+      // Test case for users running Ollama over VPN or on remote server
+      client.setOllamaBaseUrl('https://ollama.internalnet.com/v1');
+      expect(client.getOllamaBaseUrl()).toBe('https://ollama.internalnet.com/v1');
     });
   });
 });

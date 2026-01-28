@@ -160,6 +160,9 @@ function AgentConfig({ entity, onUpdate, onOpenRulefileModal }: AgentConfigProps
   const currentProvider = (entity.provider || 'mock') as LLMProviderType;
   const configuredProviders = llmClient.getConfiguredProviders();
 
+  // Track if this is a provider change (vs initial load)
+  const [isProviderChange, setIsProviderChange] = useState(false);
+
   // Load models when provider changes
   useEffect(() => {
     let cancelled = false;
@@ -172,12 +175,23 @@ function AgentConfig({ entity, onUpdate, onOpenRulefileModal }: AgentConfigProps
         if (!cancelled) {
           setModels(loadedModels);
           setModelError(null);
+
+          // If this is a provider change (not initial load), update the model to the first available
+          // This fixes GitHub issue #1: prevents using invalid models like "claude-3-5-sonnet" with Ollama
+          if (isProviderChange && loadedModels.length > 0) {
+            const currentModelExists = loadedModels.some(m => m.id === entity.model);
+            if (!currentModelExists) {
+              onUpdate(entity.id, { model: loadedModels[0].id } as Partial<AgentEntity>);
+            }
+          }
+          setIsProviderChange(false);
         }
       } catch (error) {
         console.warn(`Failed to load models for ${currentProvider}:`, error);
         if (!cancelled) {
           setModels([]);
           setModelError(error instanceof Error ? error.message : `Failed to load models from ${currentProvider}`);
+          setIsProviderChange(false);
         }
       } finally {
         if (!cancelled) {
@@ -188,9 +202,11 @@ function AgentConfig({ entity, onUpdate, onOpenRulefileModal }: AgentConfigProps
 
     loadModels();
     return () => { cancelled = true; };
-  }, [currentProvider]);
+  }, [currentProvider, isProviderChange, entity.id, entity.model, onUpdate]);
 
   const handleProviderChange = (provider: string) => {
+    // Mark this as a provider change so the useEffect knows to update the model
+    setIsProviderChange(true);
     onUpdate(entity.id, { provider } as Partial<AgentEntity>);
   };
 

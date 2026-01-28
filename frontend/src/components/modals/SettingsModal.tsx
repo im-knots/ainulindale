@@ -14,11 +14,21 @@ interface SettingsModalProps {
 
 type ProviderKey = 'openai' | 'anthropic' | 'deepseek' | 'gemini' | 'cohere' | 'mistral' | 'ollama' | 'grok';
 
-type ApiKeyState = Record<ProviderKey, string>;
+// Providers that require API keys (excludes Ollama which uses endpoint URL instead)
+type ApiKeyProviderKey = Exclude<ProviderKey, 'ollama'>;
+
+type ApiKeyState = Record<ApiKeyProviderKey, string>;
 
 type SettingsSection = 'llm-providers';
 
-const PROVIDERS: ProviderKey[] = ['openai', 'anthropic', 'deepseek', 'gemini', 'cohere', 'mistral', 'ollama', 'grok'];
+// All providers in display order (Ollama rendered differently inline)
+const ALL_PROVIDERS: ProviderKey[] = ['openai', 'anthropic', 'deepseek', 'gemini', 'cohere', 'mistral', 'ollama', 'grok'];
+
+// Providers that need API key configuration (used for state management)
+const API_KEY_PROVIDERS: ApiKeyProviderKey[] = ['openai', 'anthropic', 'deepseek', 'gemini', 'cohere', 'mistral', 'grok'];
+
+// Default Ollama endpoint
+const DEFAULT_OLLAMA_ENDPOINT = 'http://localhost:11434/v1';
 
 const PROVIDER_DISPLAY_NAMES: Record<ProviderKey, string> = {
   openai: 'OpenAI',
@@ -61,15 +71,16 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
   const [activeSection, setActiveSection] = useState<SettingsSection>('llm-providers');
   const [apiKeys, setApiKeys] = useState<ApiKeyState>(() => {
     const initial: Partial<ApiKeyState> = {};
-    PROVIDERS.forEach(provider => {
+    API_KEY_PROVIDERS.forEach(provider => {
       initial[provider] = '';
     });
     return initial as ApiKeyState;
   });
+  const [ollamaEndpoint, setOllamaEndpoint] = useState<string>(DEFAULT_OLLAMA_ENDPOINT);
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
 
-  // Load existing API keys (masked) - reload from storage to ensure fresh data
+  // Load existing API keys (masked) and Ollama endpoint - reload from storage to ensure fresh data
   useEffect(() => {
     async function loadKeys() {
       // Ensure keys are loaded from storage (handles hot reload case)
@@ -77,10 +88,13 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
 
       // Now load the masked keys into the form
       const loadedKeys: Partial<ApiKeyState> = {};
-      PROVIDERS.forEach(provider => {
+      API_KEY_PROVIDERS.forEach(provider => {
         loadedKeys[provider] = llmClient.getApiKey(provider) ? '********' : '';
       });
       setApiKeys(loadedKeys as ApiKeyState);
+
+      // Load Ollama endpoint
+      setOllamaEndpoint(llmClient.getOllamaBaseUrl() || DEFAULT_OLLAMA_ENDPOINT);
     }
 
     loadKeys();
@@ -93,7 +107,8 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
     try {
       let hasChanges = false;
 
-      for (const provider of PROVIDERS) {
+      // Save API keys for providers that need them
+      for (const provider of API_KEY_PROVIDERS) {
         const key = apiKeys[provider];
         const storageKey = STORAGE_KEYS[provider];
 
@@ -106,14 +121,23 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
         }
       }
 
+      // Save Ollama endpoint if it has changed from the current value
+      const currentOllamaUrl = llmClient.getOllamaBaseUrl();
+      if (ollamaEndpoint && ollamaEndpoint !== currentOllamaUrl) {
+        await tauriDb.setSetting('ollama:endpoint', ollamaEndpoint);
+        llmClient.setOllamaBaseUrl(ollamaEndpoint);
+        console.log(`[Settings] Saved Ollama endpoint: ${ollamaEndpoint}`);
+        hasChanges = true;
+      }
+
       if (hasChanges) {
-        setSaveMessage('API keys saved successfully');
+        setSaveMessage('Settings saved successfully');
       } else {
         setSaveMessage('No changes to save');
       }
     } catch (error) {
-      console.error('[Settings] Failed to save API keys:', error);
-      setSaveMessage('Failed to save API keys');
+      console.error('[Settings] Failed to save settings:', error);
+      setSaveMessage('Failed to save settings');
     } finally {
       setIsSaving(false);
     }
@@ -168,19 +192,19 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
           </div>
 
           {/* Right content - Settings for active section */}
-          <div className="flex-1 flex flex-col min-h-0">
+          <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
             {activeSection === 'llm-providers' && (
-              <div className="p-6 flex flex-col h-full">
+              <div className="p-6 flex flex-col">
                 <div className="flex-shrink-0 mb-4">
-                  <h3 className="text-text-primary text-lg font-medium mb-1">LLM Provider API Keys</h3>
+                  <h3 className="text-text-primary text-lg font-medium mb-1">LLM Provider Configuration</h3>
                   <p className="text-text-secondary text-sm">
-                    Configure API keys for the LLM providers you want to use. Keys are stored securely and never leave your device.
+                    Configure API keys for cloud providers and endpoint URL for Ollama. Settings are stored securely and never leave your device.
                   </p>
                 </div>
 
-                {/* API Key inputs - 2 column grid */}
+                {/* Provider inputs - 2 column grid */}
                 <div className="grid grid-cols-2 gap-x-6 gap-y-4 flex-shrink-0">
-                  {PROVIDERS.map((provider) => (
+                  {ALL_PROVIDERS.map((provider) => (
                     <div key={provider}>
                       <label className="text-text-muted text-xs block mb-1.5 font-medium flex items-center gap-2">
                         <img
@@ -189,14 +213,25 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
                           className="w-4 h-4 object-contain"
                         />
                         {PROVIDER_DISPLAY_NAMES[provider]}
+                        {provider === 'ollama' && <span className="text-text-muted/60">(Endpoint URL)</span>}
                       </label>
-                      <input
-                        type="password"
-                        value={apiKeys[provider]}
-                        onChange={(e) => handleKeyChange(provider, e.target.value)}
-                        placeholder={`Enter API key`}
-                        className="input w-full"
-                      />
+                      {provider === 'ollama' ? (
+                        <input
+                          type="text"
+                          value={ollamaEndpoint}
+                          onChange={(e) => setOllamaEndpoint(e.target.value)}
+                          placeholder={DEFAULT_OLLAMA_ENDPOINT}
+                          className="input w-full placeholder:text-text-muted/50"
+                        />
+                      ) : (
+                        <input
+                          type="password"
+                          value={apiKeys[provider]}
+                          onChange={(e) => handleKeyChange(provider, e.target.value)}
+                          placeholder="Enter API key"
+                          className="input w-full"
+                        />
+                      )}
                     </div>
                   ))}
                 </div>

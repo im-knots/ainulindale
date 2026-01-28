@@ -215,6 +215,13 @@ class LLMClient {
     return Object.keys(DEFAULT_MODELS) as LLMProviderType[];
   }
 
+  /**
+   * Get the default model for a specific provider
+   */
+  getDefaultModelForProvider(provider: LLMProviderType): string {
+    return DEFAULT_MODELS[provider] || 'mock-model';
+  }
+
   // Cache for dynamically fetched models
   private dynamicModelCache: Map<LLMProviderType, { models: ModelInfo[]; timestamp: number }> = new Map();
   private MODEL_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
@@ -1079,6 +1086,13 @@ class LLMClient {
   }
 
   /**
+   * Get the current Ollama base URL
+   */
+  getOllamaBaseUrl(): string {
+    return this.ollamaBaseUrl;
+  }
+
+  /**
    * Load API keys from Tauri SQLite storage
    * Called at app startup to initialize keys before settings panel is opened
    */
@@ -1112,6 +1126,17 @@ class LLMClient {
           // Individual key load failure - continue with others
         }
       }
+
+      // Load Ollama endpoint URL
+      try {
+        const ollamaUrl = await tauriDb.getSetting('ollama:endpoint');
+        if (ollamaUrl) {
+          this.setOllamaBaseUrl(ollamaUrl);
+          console.log(`[LLMClient] Loaded Ollama endpoint: ${ollamaUrl}`);
+        }
+      } catch {
+        // Ollama URL load failure - use default
+      }
     } catch (error) {
       console.warn('[LLMClient] Failed to load API keys from Tauri DB:', error);
       // Fallback to localStorage for non-Tauri environments
@@ -1139,6 +1164,13 @@ class LLMClient {
         this.setApiKey(provider as LLMProviderType, key);
         console.log(`[LLMClient] Loaded API key from localStorage for ${provider}`);
       }
+    }
+
+    // Load Ollama endpoint URL from localStorage
+    const ollamaUrl = localStorage.getItem('ollama:endpoint');
+    if (ollamaUrl) {
+      this.setOllamaBaseUrl(ollamaUrl);
+      console.log(`[LLMClient] Loaded Ollama endpoint from localStorage: ${ollamaUrl}`);
     }
   }
 }

@@ -19,7 +19,7 @@ Ainulindale is opinionated when it comes to how application layer chain of thoug
 - Tokens are spent finding relevant information via local RAG and tools to ensure the agent's thought process remains tight and focused.
 - This prevents context poisoning and logical drift common in long-lived persistent sessions.
 
-Tokens spent reconstructing the agents context for each task theoretically offset the need for expensive memory tokens.
+Tokens spent reconstructing the agents context for each task can theoretically offset the need for expensive memory tokens. The goal of this pattern is to distil long-throw, multi-shot "intent" into small, short-throw zero-shot tasks.
 
 ## Core Concepts
 

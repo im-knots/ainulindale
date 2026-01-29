@@ -123,48 +123,46 @@ Agents don't need explicit routing - they react to events:
 
 Position determines subscription. An agent only receives events from tools it has RBAC access to.
 
-## Budget & Costs
+## Budget & Tokens
 
-The top bar tracks spending with two currencies:
+The top bar tracks token usage for your board:
 
-| Currency | Meaning |
-|----------|---------|
-| **Total Cost** | Lifetime dollar cost for this board |
+| Metric | Meaning |
+|--------|---------|
 | **Total Tokens** | Lifetime tokens consumed (input + output) |
 
-These are **persistent totals** - they accumulate across board runs and never reset when you restart.
+This is a **persistent total** - it accumulates across board runs and never resets when you restart.
 
-### Setting Budget Limits
+### Setting Token Limits
 
-Click the **Total Cost** or **Total Tokens** display to open the budget popdown:
+Click the **Total Tokens** display to open the budget popdown:
 
-1. Enter a dollar limit (e.g., `5.00` for $5)
-2. Enter a token limit (e.g., `100000` for 100K tokens)
-3. Click **Save**
+1. Enter a token limit (e.g., `100000` for 100K tokens, `1m` for 1 million)
+2. Click **Save**
 
-Set a limit to **0** for unlimited spending on that resource.
+Set the limit to **0** for unlimited token usage.
 
 ### What Happens When Limits Are Hit
 
-When spending exceeds a limit:
+When token usage exceeds the limit:
 - The board **stops automatically**
-- A notification explains which limit was exceeded
+- A notification explains that the token limit was exceeded
 - You can increase the limit and restart
 
 ### Visual Indicators
 
-The progress bars under each currency show utilization:
+The progress bar under the token display shows utilization:
 
 | Color | Meaning |
 |-------|---------|
 | Grey | No limit set (unlimited) |
-| Green | Under 80% of limit |
+| Blue | Under 80% of limit |
 | Yellow | 80-99% of limit |
 | Red | Limit exceeded |
 
 ### Per-Run vs Lifetime
 
-Ainulindale tracks costs at two levels:
+Ainulindale tracks usage at two levels:
 
 - **Lifetime totals** (top bar) - Never reset, used for budget limits
 - **Per-run metrics** (hex heights) - Reset on board start, show current run activity

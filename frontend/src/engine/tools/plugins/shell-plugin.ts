@@ -71,9 +71,7 @@ const configSchema: JSONSchema7 = {
   required: [],
 };
 
-function isTauriEnvironment(): boolean {
-  return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
-}
+
 
 interface ShellConfig {
   shell?: string;
@@ -123,7 +121,8 @@ export class ShellPlugin implements ToolPlugin {
 
   // === Environment ===
   isAvailable(): boolean {
-    return isTauriEnvironment();
+    // Always available - app runs exclusively in Tauri
+    return true;
   }
 
   // === Lifecycle ===
@@ -183,10 +182,6 @@ export class ShellPlugin implements ToolPlugin {
     console.log(`[ShellPlugin] Executing: ${command} (in ${workingDir})`);
 
     this.commandHistory.push({ command, timestamp: new Date(), result: 'pending' });
-
-    if (!isTauriEnvironment()) {
-      throw new Error('Shell execution requires Tauri environment');
-    }
 
     const { invoke, Channel } = await import('@tauri-apps/api/core');
     const onEvent = new Channel<ShellEvent>();

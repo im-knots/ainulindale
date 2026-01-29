@@ -245,25 +245,7 @@ export class RulefileLibrary {
    */
   private async loadFromStorage(): Promise<void> {
     try {
-      // Try Tauri storage first
-      if (typeof invoke === 'function') {
-        const data = await invoke<string | null>('get_setting', { key: STORAGE_KEY });
-        if (data) {
-          const serialized: SerializedRulefile[] = JSON.parse(data);
-          for (const s of serialized) {
-            const rulefile = deserializeRulefile(s);
-            this.rulefiles.set(rulefile.id, rulefile);
-          }
-          return;
-        }
-      }
-    } catch {
-      // Fall back to localStorage
-    }
-
-    // localStorage fallback
-    try {
-      const data = localStorage.getItem(STORAGE_KEY);
+      const data = await invoke<string | null>('get_setting', { key: STORAGE_KEY });
       if (data) {
         const serialized: SerializedRulefile[] = JSON.parse(data);
         for (const s of serialized) {
@@ -287,23 +269,13 @@ export class RulefileLibrary {
     const data = JSON.stringify(customRulefiles);
 
     try {
-      // Try Tauri storage first
-      if (typeof invoke === 'function') {
-        await invoke('set_setting', { key: STORAGE_KEY, value: data });
-        return;
-      }
-    } catch {
-      // Fall back to localStorage
-    }
-
-    // localStorage fallback
-    try {
-      localStorage.setItem(STORAGE_KEY, data);
+      await invoke('set_setting', { key: STORAGE_KEY, value: data });
     } catch (e) {
       console.error('[RulefileLibrary] Failed to save to storage:', e);
     }
   }
 }
+
 
 // Singleton instance
 export const rulefileLibrary = new RulefileLibrary();

@@ -97,22 +97,11 @@ export function getEnvironmentContext(agentId: string, state: AppState): Environ
  * Get platform string
  */
 function getPlatform(): string {
-  // Check if running in Tauri
-  if (typeof window !== 'undefined' && '__TAURI__' in window) {
-    // Try to get OS from Tauri
-    const userAgent = navigator.userAgent.toLowerCase();
-    if (userAgent.includes('mac')) return 'macOS';
-    if (userAgent.includes('win')) return 'Windows';
-    if (userAgent.includes('linux')) return 'Linux';
-    return 'Desktop';
-  }
-
-  // Browser fallback
   const userAgent = navigator.userAgent.toLowerCase();
-  if (userAgent.includes('mac')) return 'macOS (browser)';
-  if (userAgent.includes('win')) return 'Windows (browser)';
-  if (userAgent.includes('linux')) return 'Linux (browser)';
-  return 'Browser';
+  if (userAgent.includes('mac')) return 'macOS';
+  if (userAgent.includes('win')) return 'Windows';
+  if (userAgent.includes('linux')) return 'Linux';
+  return 'Desktop';
 }
 
 /**

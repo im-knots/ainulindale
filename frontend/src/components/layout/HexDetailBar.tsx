@@ -1182,7 +1182,9 @@ function TasksTab({ entity }: { entity: ToolEntity }) {
                     </span>
                   )}
                   {task.description && editingIndex !== i && (
-                    <p className="text-xs text-text-muted mt-0.5">{task.description}</p>
+                    <p className="text-xs text-text-muted mt-0.5">
+                      {typeof task.description === 'string' ? task.description : JSON.stringify(task.description)}
+                    </p>
                   )}
                 </div>
                 {isProcessing && (

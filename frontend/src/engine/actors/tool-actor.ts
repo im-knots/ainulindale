@@ -481,27 +481,53 @@ export class ToolActor extends BaseActor {
    * Add a new task to the queue (for agents with WRITE permission)
    * Returns the created task or null if failed
    */
-  addTask(title: string, description?: string, priority?: string): QueueTask | null {
+  addTask(title: string | Record<string, unknown>, description?: string, priority?: string): QueueTask | null {
     if (this.toolEntity.toolType !== 'tasklist') {
       console.log(`[Tool ${this.toolEntity.name}] Cannot add tasks - not a tasklist tool`);
       return null;
     }
 
+    // Handle malformed LLM input where title is an object like { description: "...", priority: "..." }
+    let actualTitle: string;
+    let actualDescription = description;
+    let actualPriority = priority;
+
+    if (typeof title === 'object' && title !== null) {
+      // LLM sent malformed input - extract what we can
+      console.warn(`[Tool ${this.toolEntity.name}] Received malformed title object, attempting to extract:`, title);
+      const titleObj = title as Record<string, unknown>;
+      // Try to use description as the title if it exists
+      if (typeof titleObj.description === 'string') {
+        actualTitle = titleObj.description;
+      } else if (typeof titleObj.title === 'string') {
+        actualTitle = titleObj.title;
+      } else {
+        // Last resort: stringify the object
+        actualTitle = JSON.stringify(title);
+      }
+      // Extract priority if present
+      if (typeof titleObj.priority === 'string' && !actualPriority) {
+        actualPriority = titleObj.priority;
+      }
+    } else {
+      actualTitle = String(title);
+    }
+
     const task: QueueTask = {
       id: this.generateTaskId(),
-      title,
-      description,
-      priority: priority || 'normal',
+      title: actualTitle,
+      description: actualDescription,
+      priority: actualPriority || 'normal',
       status: 'pending',
     };
 
     this.taskQueue.push(task);
-    console.log(`[Tool ${this.toolEntity.name}] Task "${title}" added to queue`);
+    console.log(`[Tool ${this.toolEntity.name}] Task "${actualTitle}" added to queue`);
 
     // Also add to the store for UI persistence
     const config = this.toolEntity.config as { tasks?: { title: string; description?: string; completed: boolean }[] };
     const tasks = config.tasks || [];
-    tasks.push({ title, description, completed: false });
+    tasks.push({ title: actualTitle, description: actualDescription, completed: false });
     this.config.store.updateEntity(this.toolEntity.id, {
       config: { ...this.toolEntity.config, tasks }
     });

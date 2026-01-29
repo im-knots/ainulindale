@@ -81,11 +81,11 @@ The local RAG system provides semantic code search:
 - **Local Embeddings**: FastEmbed (AllMiniLM-L6-v2) for private, zero-latency inference.
 - **Vector Storage**: Per-hex isolation using sqlite-vec.
 
-### Budget Tracking and Heat Maps
-The system provides visual and financial guardrails:
-- **Two-Tier Tracking**: Monitor lifetime costs (Dollars) and per-run usage (Tokens).
+### Token Tracking and Heat Maps
+The system provides visual guardrails:
+- **Two-Tier Tracking**: Monitor lifetime token totals and per-run usage.
 - **Hex Height Visualization**: Hexes grow in height during execution based on token usage, creating a real-time heat map of swarm activity.
-- **Automatic Cutoffs**: The board stops automatically when budget limits are exceeded.
+- **Automatic Cutoffs**: The board stops automatically when token limits are exceeded.
 
 ### Plugin-Based Tools
 Tools are implemented as self-describing plugins that register with a central registry:
@@ -139,7 +139,7 @@ See the `docs/` directory for detailed documentation:
 
 - [Agents and Tools](docs/agents-and-tools.md) - Entity types, templates, and operations
 - [RBAC System](docs/rbac-system.md) - Zone patterns and permissions
-- [Budget System](docs/budget-system.md) - Two-tier cost tracking and limits
+- [Budget System](docs/budget-system.md) - Token tracking and limits
 - [System Prompt Generation](docs/system-prompt-generation.md) - Dynamic prompt composition
 - [Agent State](docs/agent-state.md) - Chain of thought and context construction
 - [Board Execution](docs/board-execution.md) - Event system and actor lifecycle

@@ -106,7 +106,7 @@ const initialState: StoreState = {
   connectingFrom: null,
   previewRange: null,
   resources: {
-    dollars: { max: 500, total: 0, projected: 0, rate: 0 },
+    dollars: { max: 0, total: 0, projected: 0, rate: 0 },
     tokens: { max: 10_000_000, total: 0, projected: 0, rate: 0 },
   },
   // NOTE: work stats removed - now handled by useWorkStatsFromEvents hook via EventBus

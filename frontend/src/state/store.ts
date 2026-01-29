@@ -247,7 +247,7 @@ export class Store {
       isConnecting: false,
       connectingFrom: null,
       resources: {
-        dollars: { max: 500, total: 0, projected: 0, rate: 0 },
+        dollars: { max: 0, total: 0, projected: 0, rate: 0 },
         tokens: { max: 10_000_000, total: 0, projected: 0, rate: 0 },
       },
       work: {

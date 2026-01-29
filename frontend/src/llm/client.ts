@@ -309,12 +309,11 @@ class LLMClient {
         continue;
       }
 
-      // Estimate pricing based on model name patterns
       models.push({
         id,
         name: this.formatModelName(id),
-        inputPrice: this.estimateOpenAIPrice(id, 'input'),
-        outputPrice: this.estimateOpenAIPrice(id, 'output'),
+        inputPrice: 0,
+        outputPrice: 0,
         contextWindow: 128000,
       });
     }
@@ -334,117 +333,9 @@ class LLMClient {
   }
 
   /**
-   * Estimate OpenAI pricing for models not in curated list
-   */
-  private estimateOpenAIPrice(modelId: string, type: 'input' | 'output'): number {
-    // Estimates based on typical OpenAI pricing patterns
-    if (modelId.includes('o1') || modelId.includes('o3')) {
-      return type === 'input' ? 15.00 : 60.00;
-    }
-    if (modelId.includes('gpt-4o-mini')) {
-      return type === 'input' ? 0.15 : 0.60;
-    }
-    if (modelId.includes('gpt-4o')) {
-      return type === 'input' ? 2.50 : 10.00;
-    }
-    if (modelId.includes('gpt-4-turbo')) {
-      return type === 'input' ? 10.00 : 30.00;
-    }
-    if (modelId.includes('gpt-4')) {
-      return type === 'input' ? 30.00 : 60.00;
-    }
-    // Default to mini pricing
-    return type === 'input' ? 0.15 : 0.60;
-  }
-
-  /**
-   * Estimate Anthropic pricing based on model tier
-   */
-  private estimateAnthropicPrice(modelId: string): { input: number; output: number } {
-    if (modelId.includes('opus')) {
-      return { input: 15.00, output: 75.00 };
-    }
-    if (modelId.includes('sonnet')) {
-      return { input: 3.00, output: 15.00 };
-    }
-    if (modelId.includes('haiku')) {
-      return { input: 0.80, output: 4.00 };
-    }
-    // Default to sonnet pricing
-    return { input: 3.00, output: 15.00 };
-  }
-
-  /**
-   * Estimate Gemini pricing based on model tier
-   */
-  private estimateGeminiPrice(modelId: string): { input: number; output: number } {
-    if (modelId.includes('pro')) {
-      return { input: 1.25, output: 5.00 };
-    }
-    if (modelId.includes('flash')) {
-      return { input: 0.10, output: 0.40 };
-    }
-    // Default to flash pricing
-    return { input: 0.10, output: 0.40 };
-  }
-
-  /**
-   * Estimate Cohere pricing based on model tier
-   */
-  private estimateCoherePrice(modelId: string): { input: number; output: number } {
-    if (modelId.includes('command-r-plus')) {
-      return { input: 2.50, output: 10.00 };
-    }
-    if (modelId.includes('command-r')) {
-      return { input: 0.15, output: 0.60 };
-    }
-    // Default to command-r pricing
-    return { input: 0.50, output: 1.50 };
-  }
-
-  /**
-   * Estimate Grok pricing based on model tier
-   */
-  private estimateGrokPrice(modelId: string): { input: number; output: number } {
-    if (modelId.includes('grok-4') && !modelId.includes('fast')) {
-      return { input: 30.00, output: 150.00 };
-    }
-    if (modelId.includes('grok-3') && !modelId.includes('mini')) {
-      return { input: 30.00, output: 150.00 };
-    }
-    if (modelId.includes('grok-3-mini')) {
-      return { input: 3.00, output: 5.00 };
-    }
-    if (modelId.includes('grok-2')) {
-      return { input: 20.00, output: 100.00 };
-    }
-    if (modelId.includes('fast')) {
-      return { input: 2.00, output: 5.00 };
-    }
-    // Default to grok-2 pricing
-    return { input: 20.00, output: 100.00 };
-  }
-
-  /**
-   * Estimate Mistral pricing based on model tier
-   */
-  private estimateMistralPrice(modelId: string): { input: number; output: number } {
-    if (modelId.includes('large')) {
-      return { input: 2.00, output: 6.00 };
-    }
-    if (modelId.includes('codestral')) {
-      return { input: 0.30, output: 0.90 };
-    }
-    if (modelId.includes('small')) {
-      return { input: 0.20, output: 0.60 };
-    }
-    // Default to small pricing
-    return { input: 0.50, output: 1.50 };
-  }
-
-  /**
    * Calculate cost based on token usage and model pricing
    * Uses pricing from the model cache (fetched from provider APIs)
+   * Returns zero cost if model pricing is not available
    */
   private calculateCost(
     provider: LLMProviderType,
@@ -456,7 +347,7 @@ class LLMClient {
     const cached = this.dynamicModelCache.get(provider);
     if (cached) {
       const model = cached.models.find(m => m.id === modelId);
-      if (model) {
+      if (model && (model.inputPrice > 0 || model.outputPrice > 0)) {
         const inputCost = (promptTokens / 1_000_000) * model.inputPrice;
         const outputCost = (completionTokens / 1_000_000) * model.outputPrice;
         return {
@@ -467,47 +358,18 @@ class LLMClient {
       }
     }
 
-    // Fallback: estimate pricing if model not in cache
-    let pricing: { input: number; output: number };
-    switch (provider) {
-      case 'openai':
-        pricing = { input: this.estimateOpenAIPrice(modelId, 'input'), output: this.estimateOpenAIPrice(modelId, 'output') };
-        break;
-      case 'anthropic':
-        pricing = this.estimateAnthropicPrice(modelId);
-        break;
-      case 'deepseek':
-        // Use DeepSeek hardcoded pricing
-        const deepseekModel = DEEPSEEK_MODELS.find(m => m.id === modelId);
-        pricing = deepseekModel ? { input: deepseekModel.inputPrice, output: deepseekModel.outputPrice } : { input: 0.14, output: 0.28 };
-        break;
-      case 'gemini':
-        pricing = this.estimateGeminiPrice(modelId);
-        break;
-      case 'cohere':
-        pricing = this.estimateCoherePrice(modelId);
-        break;
-      case 'mistral':
-        pricing = this.estimateMistralPrice(modelId);
-        break;
-      case 'grok':
-        pricing = this.estimateGrokPrice(modelId);
-        break;
-      case 'ollama':
-      case 'mock':
-        pricing = { input: 0, output: 0 };
-        break;
-      default:
-        pricing = { input: 0, output: 0 };
+    // For DeepSeek, use hardcoded pricing from DEEPSEEK_MODELS
+    if (provider === 'deepseek') {
+      const deepseekModel = DEEPSEEK_MODELS.find(m => m.id === modelId);
+      if (deepseekModel) {
+        const inputCost = (promptTokens / 1_000_000) * deepseekModel.inputPrice;
+        const outputCost = (completionTokens / 1_000_000) * deepseekModel.outputPrice;
+        return { inputCost, outputCost, totalCost: inputCost + outputCost };
+      }
     }
 
-    const inputCost = (promptTokens / 1_000_000) * pricing.input;
-    const outputCost = (completionTokens / 1_000_000) * pricing.output;
-    return {
-      inputCost,
-      outputCost,
-      totalCost: inputCost + outputCost,
-    };
+    // No pricing available - return zero cost
+    return { inputCost: 0, outputCost: 0, totalCost: 0 };
   }
 
   /**
@@ -536,13 +398,11 @@ class LLMClient {
         continue;
       }
 
-      // Estimate pricing based on model tier
-      const pricing = this.estimateAnthropicPrice(id);
       models.push({
         id,
         name: this.formatModelName(id),
-        inputPrice: pricing.input,
-        outputPrice: pricing.output,
+        inputPrice: 0,
+        outputPrice: 0,
         contextWindow: 200000,
       });
     }
@@ -613,13 +473,11 @@ class LLMClient {
         continue;
       }
 
-      // Estimate pricing based on model tier
-      const pricing = this.estimateGeminiPrice(id);
       models.push({
         id,
         name: this.formatModelName(id),
-        inputPrice: pricing.input,
-        outputPrice: pricing.output,
+        inputPrice: 0,
+        outputPrice: 0,
         contextWindow: 1000000,
       });
     }
@@ -663,13 +521,11 @@ class LLMClient {
         continue;
       }
 
-      // Estimate pricing based on model tier
-      const pricing = this.estimateCoherePrice(id);
       models.push({
         id,
         name: this.formatModelName(id),
-        inputPrice: pricing.input,
-        outputPrice: pricing.output,
+        inputPrice: 0,
+        outputPrice: 0,
         contextWindow: 128000,
       });
     }
@@ -708,13 +564,11 @@ class LLMClient {
     for (const model of data.data || []) {
       const id = model.id as string;
 
-      // Estimate pricing based on model tier
-      const pricing = this.estimateGrokPrice(id);
       models.push({
         id,
         name: this.formatModelName(id),
-        inputPrice: pricing.input,
-        outputPrice: pricing.output,
+        inputPrice: 0,
+        outputPrice: 0,
         contextWindow: 128000,
       });
     }
@@ -742,13 +596,12 @@ class LLMClient {
 
     for (const model of data.data || []) {
       const id = model.id as string;
-      const pricing = this.estimateMistralPrice(id);
 
       models.push({
         id,
         name: this.formatModelName(id),
-        inputPrice: pricing.input,
-        outputPrice: pricing.output,
+        inputPrice: 0,
+        outputPrice: 0,
         contextWindow: 32000,
       });
     }
@@ -1138,39 +991,7 @@ class LLMClient {
         // Ollama URL load failure - use default
       }
     } catch (error) {
-      console.warn('[LLMClient] Failed to load API keys from Tauri DB:', error);
-      // Fallback to localStorage for non-Tauri environments
-      this.loadApiKeysFromLocalStorage();
-    }
-  }
-
-  /**
-   * Fallback: Load API keys from localStorage (for non-Tauri environments)
-   */
-  private loadApiKeysFromLocalStorage(): void {
-    const STORAGE_KEYS: Record<string, string> = {
-      openai: 'api-key:openai',
-      anthropic: 'api-key:anthropic',
-      deepseek: 'api-key:deepseek',
-      gemini: 'api-key:gemini',
-      cohere: 'api-key:cohere',
-      mistral: 'api-key:mistral',
-      grok: 'api-key:grok',
-    };
-
-    for (const [provider, storageKey] of Object.entries(STORAGE_KEYS)) {
-      const key = localStorage.getItem(storageKey);
-      if (key) {
-        this.setApiKey(provider as LLMProviderType, key);
-        console.log(`[LLMClient] Loaded API key from localStorage for ${provider}`);
-      }
-    }
-
-    // Load Ollama endpoint URL from localStorage
-    const ollamaUrl = localStorage.getItem('ollama:endpoint');
-    if (ollamaUrl) {
-      this.setOllamaBaseUrl(ollamaUrl);
-      console.log(`[LLMClient] Loaded Ollama endpoint from localStorage: ${ollamaUrl}`);
+      console.error('[LLMClient] Failed to load API keys from Tauri DB:', error);
     }
   }
 }

@@ -32,7 +32,6 @@ export function ResourceBar({ onSettingsClick }: ResourceBarProps) {
 
   // Budget popdown state
   const [isBudgetPopdownOpen, setIsBudgetPopdownOpen] = useState(false);
-  const [dollarBudget, setDollarBudget] = useState<string>('');
   const [tokenBudget, setTokenBudget] = useState<string>('');
   const [isSaving, setIsSaving] = useState(false);
   const [budgetError, setBudgetError] = useState<string | null>(null);
@@ -42,7 +41,6 @@ export function ResourceBar({ onSettingsClick }: ResourceBarProps) {
   // Load budget when popdown opens
   useEffect(() => {
     if (isBudgetPopdownOpen && currentBoard) {
-      setDollarBudget(currentBoard.max_dollars.toString());
       setTokenBudget(currentBoard.max_tokens.toString());
       setBudgetError(null);
     }
@@ -99,14 +97,9 @@ export function ResourceBar({ onSettingsClick }: ResourceBarProps) {
   const handleSaveBudget = async () => {
     if (!currentBoard) return;
 
-    const dollarValue = parseHumanNumber(dollarBudget);
     const tokenValue = parseHumanNumber(tokenBudget);
 
     // Validation
-    if (dollarValue === null || dollarValue < 0) {
-      setBudgetError('Invalid dollar budget. Use numbers like 5, 1.5k, 2m');
-      return;
-    }
     if (tokenValue === null || tokenValue < 0) {
       setBudgetError('Invalid token budget. Use numbers like 1000, 100k, 1m');
       return;
@@ -116,6 +109,9 @@ export function ResourceBar({ onSettingsClick }: ResourceBarProps) {
     setBudgetError(null);
 
     try {
+      // Keep dollar budget at 0 (unlimited) - we only track tokens in UI
+      const dollarValue = 0;
+
       // Update board in database
       await tauriDb.updateBoard(currentBoard.id, {
         maxDollars: dollarValue,
@@ -194,43 +190,15 @@ export function ResourceBar({ onSettingsClick }: ResourceBarProps) {
   const canStart = currentBoard !== null && !isLoading;
 
   // Calculate budget progress percentages using persistent totals
-  const dollarBudgetLimit = currentBoard?.max_dollars || 0;
   const tokenBudgetLimit = currentBoard?.max_tokens || 0;
-  // Use persistent totals from database for budget progress
-  const totalDollarsSpent = currentBoard?.total_dollars || 0;
   const totalTokensUsed = currentBoard?.total_tokens || 0;
-  const dollarProgress = dollarBudgetLimit > 0 ? Math.min((totalDollarsSpent / dollarBudgetLimit) * 100, 100) : 0;
   const tokenProgress = tokenBudgetLimit > 0 ? Math.min((totalTokensUsed / tokenBudgetLimit) * 100, 100) : 0;
 
   return (
     <>
       <div className="flex items-center gap-6">
-        {/* LEFT: Resource Section - Cost and Tokens (computed from all entities) */}
+        {/* LEFT: Resource Section - Tokens (computed from all entities) */}
         <div className="relative flex items-center gap-4" ref={resourceSectionRef}>
-          {/* Dollar Budget - Shows lifetime total from database */}
-          <button
-            onClick={() => setIsBudgetPopdownOpen(!isBudgetPopdownOpen)}
-            className="flex flex-col min-w-[100px] hover:bg-bg-tertiary/50 px-2 py-1 rounded transition-colors cursor-pointer"
-            title="Lifetime cost for this board - click to configure budget"
-          >
-            <span className="text-xs text-text-muted uppercase tracking-wide">Total Cost</span>
-            <span className="text-lg font-medium text-text-primary">${totalDollarsSpent.toFixed(4)}</span>
-            <div className="w-full h-1 bg-bg-tertiary rounded-full mt-1 mb-1 overflow-hidden">
-              <div
-                className={`h-full transition-all ${
-                  dollarBudgetLimit === 0
-                    ? 'bg-text-muted/30'
-                    : dollarProgress >= 100
-                      ? 'bg-accent-danger'
-                      : dollarProgress >= 80
-                        ? 'bg-accent-warning'
-                        : 'bg-accent-success'
-                }`}
-                style={{ width: dollarBudgetLimit === 0 ? '100%' : `${dollarProgress}%` }}
-              />
-            </div>
-          </button>
-
           {/* Token Budget - Shows lifetime total from database */}
           <button
             onClick={() => setIsBudgetPopdownOpen(!isBudgetPopdownOpen)}
@@ -272,24 +240,6 @@ export function ResourceBar({ onSettingsClick }: ResourceBarProps) {
                     {budgetError}
                   </div>
                 )}
-
-                {/* Dollar Budget Input */}
-                <div>
-                  <label className="block text-xs font-medium text-text-muted mb-1">
-                    Dollar Limit
-                  </label>
-                  <div className="relative">
-                    <span className="absolute left-2 top-1/2 -translate-y-1/2 text-text-muted text-sm">$</span>
-                    <input
-                      type="text"
-                      value={dollarBudget}
-                      onChange={(e) => setDollarBudget(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && handleSaveBudget()}
-                      className="w-full pl-6 pr-3 py-1.5 bg-bg-tertiary border border-border rounded text-sm text-text-primary focus:outline-none focus:border-accent-info"
-                      placeholder="0, 5, 1.5k"
-                    />
-                  </div>
-                </div>
 
                 {/* Token Budget Input */}
                 <div>

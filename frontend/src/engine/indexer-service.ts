@@ -26,12 +26,7 @@ interface IndexResult {
   files_processed: number;
 }
 
-/**
- * Check if running in Tauri environment
- */
-function isTauriEnvironment(): boolean {
-  return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
-}
+
 
 export class IndexerService {
   private eventBus: EventBus;
@@ -49,11 +44,6 @@ export class IndexerService {
    * Start the indexer service - subscribe to events and index all filesystem hexes
    */
   async start(): Promise<void> {
-    if (!isTauriEnvironment()) {
-      console.log('[IndexerService] Not in Tauri environment, skipping');
-      return;
-    }
-
     console.log('[IndexerService] Starting...');
 
     // Subscribe to filesystem.changed events for incremental updates

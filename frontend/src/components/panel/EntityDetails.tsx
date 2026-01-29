@@ -916,12 +916,6 @@ function MetricsSection({ entity }: { entity: Entity }) {
       <h4 className="text-text-secondary text-sm font-medium mb-2">Run Metrics</h4>
       <div className="grid grid-cols-2 gap-2 text-sm">
         <div>
-          <span className="text-text-muted">Cost:</span>
-          <span className="text-text-primary ml-2">
-            ${metrics.runCost?.toFixed(4) ?? '0.00'}
-          </span>
-        </div>
-        <div>
           <span className="text-text-muted">Tokens:</span>
           <span className="text-text-primary ml-2">
             {metrics.runTokens ?? 0}

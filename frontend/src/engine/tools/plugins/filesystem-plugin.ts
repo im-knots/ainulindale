@@ -95,12 +95,7 @@ const configSchema: JSONSchema7 = {
   required: [],
 };
 
-/**
- * Check if running in Tauri environment
- */
-function isTauriEnvironment(): boolean {
-  return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
-}
+
 
 /**
  * Filesystem Plugin implementation
@@ -138,7 +133,8 @@ export class FilesystemPlugin implements ToolPlugin {
 
   // === Environment ===
   isAvailable(): boolean {
-    return isTauriEnvironment();
+    // Always available - app runs exclusively in Tauri
+    return true;
   }
 
   // === Lifecycle ===
@@ -219,7 +215,6 @@ export class FilesystemPlugin implements ToolPlugin {
   }
 
   private async readFile(path: string, workspaceRoot?: string): Promise<string> {
-    if (!isTauriEnvironment()) throw new Error('Filesystem access requires Tauri environment');
     const { invoke } = await import('@tauri-apps/api/core');
     const resolvedPath = this.resolvePath(path, workspaceRoot);
     console.log(`[FilesystemPlugin] Reading file: ${resolvedPath}`);
@@ -227,7 +222,6 @@ export class FilesystemPlugin implements ToolPlugin {
   }
 
   private async writeFile(path: string, content: string, workspaceRoot?: string): Promise<{ written: number }> {
-    if (!isTauriEnvironment()) throw new Error('Filesystem access requires Tauri environment');
     const { invoke } = await import('@tauri-apps/api/core');
     const resolvedPath = this.resolvePath(path, workspaceRoot);
     console.log(`[FilesystemPlugin] Writing file: ${resolvedPath} (${content.length} chars)`);
@@ -236,7 +230,6 @@ export class FilesystemPlugin implements ToolPlugin {
   }
 
   private async listDirectory(path: string, workspaceRoot?: string): Promise<{ entries: { name: string; type: 'file' | 'directory'; size: number }[] }> {
-    if (!isTauriEnvironment()) throw new Error('Filesystem access requires Tauri environment');
     const { invoke } = await import('@tauri-apps/api/core');
     const resolvedPath = this.resolvePath(path, workspaceRoot);
     const dirEntries = await invoke<DirEntry[]>('list_directory', { path: resolvedPath });
@@ -261,7 +254,6 @@ export class FilesystemPlugin implements ToolPlugin {
   }
 
   private async deleteFile(path: string, workspaceRoot?: string): Promise<{ deleted: string }> {
-    if (!isTauriEnvironment()) throw new Error('Filesystem access requires Tauri environment');
     const { invoke } = await import('@tauri-apps/api/core');
     const resolvedPath = this.resolvePath(path, workspaceRoot);
     await invoke('delete_file', { path: resolvedPath });
@@ -269,7 +261,6 @@ export class FilesystemPlugin implements ToolPlugin {
   }
 
   private async deleteDirectory(path: string, workspaceRoot?: string): Promise<{ deleted: string }> {
-    if (!isTauriEnvironment()) throw new Error('Filesystem access requires Tauri environment');
     const { invoke } = await import('@tauri-apps/api/core');
     const resolvedPath = this.resolvePath(path, workspaceRoot);
     await invoke('delete_directory', { path: resolvedPath });
@@ -277,7 +268,6 @@ export class FilesystemPlugin implements ToolPlugin {
   }
 
   private async copyFile(source: string, destination: string, workspaceRoot?: string): Promise<{ source: string; destination: string; bytesCopied: number }> {
-    if (!isTauriEnvironment()) throw new Error('Filesystem access requires Tauri environment');
     const { invoke } = await import('@tauri-apps/api/core');
     const resolvedSource = this.resolvePath(source, workspaceRoot);
     const resolvedDest = this.resolvePath(destination, workspaceRoot);
@@ -286,7 +276,6 @@ export class FilesystemPlugin implements ToolPlugin {
   }
 
   private async moveFile(source: string, destination: string, workspaceRoot?: string): Promise<{ source: string; destination: string }> {
-    if (!isTauriEnvironment()) throw new Error('Filesystem access requires Tauri environment');
     const { invoke } = await import('@tauri-apps/api/core');
     const resolvedSource = this.resolvePath(source, workspaceRoot);
     const resolvedDest = this.resolvePath(destination, workspaceRoot);
@@ -295,7 +284,6 @@ export class FilesystemPlugin implements ToolPlugin {
   }
 
   private async createDirectory(path: string, workspaceRoot?: string): Promise<{ created: string }> {
-    if (!isTauriEnvironment()) throw new Error('Filesystem access requires Tauri environment');
     const { invoke } = await import('@tauri-apps/api/core');
     const resolvedPath = this.resolvePath(path, workspaceRoot);
     await invoke('create_directory', { path: resolvedPath });
@@ -303,7 +291,6 @@ export class FilesystemPlugin implements ToolPlugin {
   }
 
   private async fileExists(path: string, workspaceRoot?: string): Promise<{ path: string; exists: boolean }> {
-    if (!isTauriEnvironment()) throw new Error('Filesystem access requires Tauri environment');
     const { invoke } = await import('@tauri-apps/api/core');
     const resolvedPath = this.resolvePath(path, workspaceRoot);
     const exists = await invoke<boolean>('file_exists', { path: resolvedPath });
@@ -311,14 +298,12 @@ export class FilesystemPlugin implements ToolPlugin {
   }
 
   private async getFileInfo(path: string, workspaceRoot?: string): Promise<FileInfo> {
-    if (!isTauriEnvironment()) throw new Error('Filesystem access requires Tauri environment');
     const { invoke } = await import('@tauri-apps/api/core');
     const resolvedPath = this.resolvePath(path, workspaceRoot);
     return invoke<FileInfo>('get_file_info', { path: resolvedPath });
   }
 
   private async codebaseSearch(query: string, filesystemHexId?: string, limit: number = 10): Promise<CodebaseSearchResult> {
-    if (!isTauriEnvironment()) throw new Error('Codebase search requires Tauri environment');
     const { invoke } = await import('@tauri-apps/api/core');
     const isReady = await invoke<boolean>('indexer_is_ready');
     if (!isReady) await invoke('indexer_initialize');

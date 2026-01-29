@@ -217,13 +217,12 @@ export function HexDetailBar() {
               });
             } else {
               const usage = event.data?.usage as { totalTokens?: number } | undefined;
-              const cost = event.data?.cost as { totalCost?: number } | undefined;
               const content = String(event.data?.content || '');
 
               entityLogs.logs.push({
                 timestamp,
                 level: 'info',
-                message: `[RESPONSE] (${event.data?.finishReason || 'unknown'}) | tokens: ${usage?.totalTokens || '?'} | cost: $${cost?.totalCost?.toFixed(6) || '0'}`,
+                message: `[RESPONSE] (${event.data?.finishReason || 'unknown'}) | tokens: ${usage?.totalTokens || '?'}`,
               });
 
               if (content) {
@@ -930,19 +929,13 @@ function MetricsTab({ entity }: { entity: Entity }) {
         <span className="text-sm text-text-primary">{entity.category}</span>
       </div>
 
-      {/* Agent-specific metrics: LLM calls, cost, and tokens */}
+      {/* Agent-specific metrics: LLM calls and tokens */}
       {isAgent && (
         <>
           <div className="flex justify-between py-2 border-b border-border">
             <span className="text-sm text-text-muted">LLM Calls</span>
             <span className="text-sm text-text-primary font-medium">
               {entity.metrics?.llmCallCount || 0}
-            </span>
-          </div>
-          <div className="flex justify-between py-2 border-b border-border">
-            <span className="text-sm text-text-muted">Run Cost</span>
-            <span className="text-sm text-accent-success font-medium">
-              ${(entity.metrics?.runCost || 0).toFixed(6)}
             </span>
           </div>
           <div className="flex justify-between py-2 border-b border-border">
